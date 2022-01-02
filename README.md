@@ -1,4 +1,4 @@
-# IntroductionToEconometricsUsingR
+# Introduction To Econometrics Using R
 
 Econometrics using R introduction course.
 
