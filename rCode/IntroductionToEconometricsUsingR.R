@@ -682,7 +682,7 @@ summary(panel.re)
 phtest(panel.fe, panel.re)
 
 
-# Insgtall and load the "stargazer" package install.packages("stargazer")
+# Install and load the "stargazer" package install.packages("stargazer")
 
 library(stargazer)
 
