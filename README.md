@@ -8,4 +8,4 @@ It is recommended to use the tutorial in parallel with the application of R code
 The code is organized sequentially, respecting the progress of the different sections of the tutorial. 
 The user can find the datasets for the application in the data folder. 
 The main dataset is named "crime.xls," which contains observed data 
-collected by the author from different French national sources related to crimes, incidents, and offenses recorded in 2011. 
+collected by the author from different French national sources related to the total number of crimes, incidents, and offenses recorded by department in 2011. 
