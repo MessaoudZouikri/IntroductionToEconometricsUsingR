@@ -339,6 +339,12 @@ durbinWatsonTest(MyModel)
 
 ncvTest(MyModel)
 
+# Remedy: if H0 is rejected, use HC-robust standard errors.
+# Point estimates are unchanged; only standard errors and p-values are corrected.
+
+library(AER)
+coeftest(MyModel, vcov = vcovHC, type = "HC1")
+
 # --- Residual diagnostic plots -----------------------------------------------
 
 spreadLevelPlot(MyModel)
@@ -373,12 +379,15 @@ glance(MyModel_log)
 
 library(AER)
 
+# Two instruments: pupils (human capital channel) and roads (infrastructure channel)
+
 # --- Stage 1: reduced-form equation ------------------------------------------
 
-reducedForm <- lm(lgdp_cap ~ pupils + unemp_rate + poverty_index + lpop,
+reducedForm <- lm(lgdp_cap ~ pupils + roads + unemp_rate + poverty_index + lpop,
                   data = crimes)
 summary(reducedForm)
 
+# HC-robust t-tests for each instrument (relevance check)
 coeftest(reducedForm, vcov = vcovHC, type = "HC1")
 summary(reducedForm)$r.squared
 
@@ -395,8 +404,8 @@ coeftest(structuralEq, vcov = vcovHC, type = "HC1")
 # Add Stage-1 residuals to the structural equation.
 # A significant coefficient on gdp_residuals confirms endogeneity.
 
-HausmanTest  <- lm(lgdp_cap ~ pupils + unemp_rate + poverty_index + lpop,
-                   data = crimes)
+HausmanTest   <- lm(lgdp_cap ~ pupils + roads + unemp_rate + poverty_index + lpop,
+                    data = crimes)
 gdp_residuals <- residuals(HausmanTest)   # residuals, not fitted values
 
 endoTest <- lm(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop +
@@ -404,12 +413,14 @@ endoTest <- lm(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop +
 coeftest(endoTest, vcov = vcovHC, type = "HC1")
 
 # --- IV estimation with ivreg() ----------------------------------------------
-# Formula: structural regressors | exogenous variables + external instrument
+# Both instruments (pupils, roads) appear right of |; lgdp_cap is excluded from there.
+# With 2 instruments for 1 endogenous variable, the model is overidentified (df = 1).
 
 ivreg_est <- ivreg(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop |
-                                 pupils   + unemp_rate + poverty_index + lpop,
+                                 pupils + roads + unemp_rate + poverty_index + lpop,
                    data = crimes)
 
+# diagnostics = TRUE: weak-instrument F-test, Wu-Hausman test, Sargan test
 summary(ivreg_est, diagnostics = TRUE)
 coeftest(ivreg_est, vcov = vcovHC, type = "HC1")
 

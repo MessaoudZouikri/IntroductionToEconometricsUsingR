@@ -6,6 +6,16 @@
 
 ---
 
+This course provides a hands-on introduction to econometric methods using R, designed for first-year Master students in Economics. It follows the standard progression of an introductory econometrics syllabus — from data handling and descriptive analysis through OLS, instrumental variables, panel data, and binary choice models — with every concept illustrated by immediately runnable R code.
+
+The primary empirical application uses original cross-sectional data on **95 French metropolitan departments** (2011), covering crime rates, GDP, poverty, unemployment, and population. The panel and binary choice chapters use datasets from Wooldridge (2020), the standard reference textbook at this level.
+
+**Assumed background:** introductory statistics (hypothesis testing, confidence intervals) and basic linear algebra. No prior R experience is required — Chapter 1 covers R from scratch.
+
+**How to use this document:** read the narrative, then run the corresponding section of `rCode/IntroductionToEconometricsUsingR.R` in RStudio. The script is organised in the same chapter order as this tutorial.
+
+---
+
 ## Table of Contents
 
 - [Prerequisites and Setup](#prerequisites-and-setup)
@@ -277,6 +287,7 @@ The primary dataset `crimes.xls` contains cross-sectional data on **95 French me
 | `population` | Total population |
 | `unemp_rate` | Unemployment rate (%) |
 | `pupils` | Number of registered students |
+| `roads` | Total length of the departmental road network (kilometres) |
 
 ### 3.1 Loading and Inspecting the Data
 
@@ -360,8 +371,8 @@ crimes$poverty_cat <- ifelse(crimes$poverty_index > mean(crimes$poverty_index), 
 
 The chi-square test of independence examines whether the level of crime and the level of poverty are associated across departments.
 
-- **H₀:** No association between crime level and poverty level
-- **H₁:** The two variables are associated
+- $H_0$: No association between crime level and poverty level
+- $H_1$: The two variables are associated
 
 ```r
 library(gmodels)
@@ -505,7 +516,7 @@ The output reports:
 - **Coefficients** — estimate, standard error, t-statistic, and p-value for each regressor
 - **R²** — share of the variance of `crimes` explained by the model
 - **Adjusted R²** — penalises for additional regressors
-- **F-statistic** — tests joint significance of all regressors (H₀: all β = 0)
+- **F-statistic** — tests joint significance of all regressors ($H_0$: all $\beta = 0$)
 
 ### 5.3 Confidence Intervals and Fitted Values
 
@@ -539,16 +550,25 @@ durbinWatsonTest(MyModel)
 
 ### 5.6 Heteroskedasticity — Non-Constant Variance Test
 
-OLS standard errors assume constant error variance (homoskedasticity). If the variance of ε changes with the fitted values, inference is unreliable.
+OLS standard errors assume constant error variance (homoskedasticity). If the variance of $\varepsilon$ changes with the fitted values, inference is unreliable.
 
-- **H₀:** Constant error variance (homoskedasticity)  
-- **H₁:** Error variance changes with fitted values (heteroskedasticity)
+- $H_0$: Constant error variance (homoskedasticity)  
+- $H_1$: Error variance changes with fitted values (heteroskedasticity)
 
 ```r
 ncvTest(MyModel)
 ```
 
-A significant result (small p-value) rejects H₀. The remedy is to use **heteroskedasticity-consistent (HC) standard errors** via `coeftest(..., vcov = vcovHC)` from the `AER` package.
+A significant result (small p-value) rejects $H_0$. The remedy is to use **heteroskedasticity-consistent (HC) standard errors**, which correct the variance-covariance matrix of the estimator without changing the point estimates:
+
+```r
+library(AER)
+
+# HC1-robust standard errors (equivalent to Stata's robust option)
+coeftest(MyModel, vcov = vcovHC, type = "HC1")
+```
+
+The coefficients are identical to those of `summary(MyModel)`, but the standard errors, t-statistics, and p-values are now robust to heteroskedasticity.
 
 ### 5.7 Residual Diagnostic Plots
 
@@ -615,29 +635,40 @@ glance(MyModel_log)   # same for the log model
 
 ### 7.1 The Endogeneity Problem
 
-In the log-log model, GDP per capita (`lgdp_cap`) may be **endogenous**: departmental economic activity and crime rates could both be driven by unobserved factors (e.g., local governance quality, social cohesion). This causes **reverse causality** — crime also affects economic performance — violating the OLS exogeneity assumption. The OLS estimator would then be biased and inconsistent.
+In the log-log model, GDP per capita (`lgdp_cap`) may be **endogenous** due to an **omitted variable problem**. Specifically, the model fails to capture unobserved structural factors, such as the fundamental nature of the departmental economy (e.g., whether a department is predominantly rural or heavily industrial) and the specific sectoral composition of its activities. Because these omitted characteristics simultaneously influence both the region's economic performance and its crime rates, they violate the OLS exogeneity assumption. Consequently, the OLS estimator would be biased and inconsistent.
 
-The solution is to use an **instrumental variable (IV)** — a variable that:
-1. Is correlated with the endogenous regressor (**relevance**)
-2. Affects the dependent variable **only through** the endogenous regressor (**exclusion restriction**)
+### 7.2 Instrumental Variables: Identification Strategy
 
-Here, **`pupils`** (number of registered students) serves as instrument for `lgdp_cap`.
+To identify the causal effect of GDP per capita on crime in the presence of omitted variable bias, we propose **two instrumental variables** for `lgdp_cap`: the student population (`pupils`) and the kilometres of departmental road networks (`roads`).
 
-### 7.2 Two-Stage Least Squares (2SLS) — Manual Approach
+The validity of these instruments rests on two standard identification conditions:
 
-**Stage 1 — Reduced form:** regress the endogenous variable on all exogenous variables and the instrument.
+**1. Relevance** — $\text{Cov}(Z, X) \neq 0$: each instrument must be correlated with the endogenous regressor `lgdp_cap`. This is theoretically supported by dual channels:
+- *Human capital accumulation:* student enrolment (`pupils`) is linked to economic output through the accumulation of skilled labour, which raises departmental productivity and GDP per capita.
+- *Infrastructural capacity:* road networks (`roads`) facilitate regional trade, reduce transport costs, and attract economic activity, thereby positively affecting GDP per capita.
+
+**2. Exclusion restriction** — $\text{Cov}(Z, u) = 0$: each instrument must be orthogonal to the structural error term, i.e., it must affect the crime rate **only through** GDP per capita, and not through the unobserved omitted factors.
+- For `pupils`: student enrolment is largely independent of the unobserved regional characteristics — such as the specific rural or industrial sectoral composition — that jointly confound GDP and crime.
+- For `roads`: the historical layout of departmental road infrastructure affects crime exclusively through its impact on current economic activity, rather than being determined by the contemporary unobserved structural factors that drive local crime rates.
+
+> **Overidentification:** with two instruments and one endogenous variable, the model is **overidentified** (degree of overidentification = 1). This allows the **Sargan–Hansen test** to partially assess instrument validity: conditional on one instrument being valid, it tests whether the other is also exogenous. The test is automatically reported by `summary(ivreg_est, diagnostics = TRUE)`.
+
+### 7.3 Two-Stage Least Squares (2SLS) — Manual Approach
+
+**Stage 1 — Reduced form:** regress the endogenous variable on all exogenous variables **and both instruments**.
 
 ```r
 library(AER)
 
-reducedForm <- lm(lgdp_cap ~ pupils + unemp_rate + poverty_index + lpop,
+reducedForm <- lm(lgdp_cap ~ pupils + roads + unemp_rate + poverty_index + lpop,
                   data = crimes)
 summary(reducedForm)
 
-# Test significance of the instrument (H0: its coefficient = 0)
+# Test the joint significance of both instruments (H0: their coefficients are jointly = 0)
+# A significant F-statistic confirms instrument relevance
 coeftest(reducedForm, vcov = vcovHC, type = "HC1")
 
-summary(reducedForm)$r.squared   # first-stage R²: a strong instrument should be high
+summary(reducedForm)$r.squared   # first-stage R²: should be reasonably high
 
 lgdp_pred <- fitted(reducedForm)   # predicted values of lgdp_cap
 ```
@@ -653,14 +684,14 @@ coeftest(structuralEq, vcov = vcovHC, type = "HC1")
 
 > **Important:** The standard errors from manual 2SLS are biased (they ignore the uncertainty from Stage 1). Always use `ivreg()` for correct inference.
 
-### 7.3 Hausman Endogeneity Test
+### 7.4 Hausman Endogeneity Test
 
 The Hausman test compares OLS and IV estimates: if they differ significantly, the OLS assumption of exogeneity is rejected.
 
 The **regression-based version** adds the Stage 1 **residuals** (not fitted values) to the structural equation. A significant coefficient on the residuals confirms endogeneity.
 
 ```r
-HausmanTest   <- lm(lgdp_cap ~ pupils + unemp_rate + poverty_index + lpop,
+HausmanTest   <- lm(lgdp_cap ~ pupils + roads + unemp_rate + poverty_index + lpop,
                     data = crimes)
 gdp_residuals <- residuals(HausmanTest)   # first-stage residuals
 
@@ -669,19 +700,30 @@ endoTest <- lm(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop +
 coeftest(endoTest, vcov = vcovHC, type = "HC1")
 ```
 
-### 7.4 IV Estimation with `ivreg()`
+### 7.5 IV Estimation with `ivreg()`
 
-`ivreg()` implements 2SLS in one step with correct standard errors. The formula syntax `y ~ endogenous + exogenous | instrument + exogenous` separates structural regressors (left of `|`) from instruments (right of `|`). Exogenous regressors appear on **both sides**.
+`ivreg()` implements 2SLS in one step with correct standard errors. The formula syntax `y ~ endogenous + exogenous | instruments + exogenous` separates structural regressors (left of `|`) from instruments (right of `|`). Exogenous regressors appear on **both sides**. Both `pupils` and `roads` appear on the right side only.
 
 ```r
 ivreg_est <- ivreg(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop |
-                                 pupils   + unemp_rate + poverty_index + lpop,
+                                 pupils + roads + unemp_rate + poverty_index + lpop,
                    data = crimes)
 
-summary(ivreg_est, diagnostics = TRUE)   # includes weak-instrument F-test
+# diagnostics = TRUE reports: weak-instrument F-test, Wu-Hausman endogeneity test,
+# and the Sargan overidentification test (valid because we have 2 instruments for 1
+# endogenous variable)
+summary(ivreg_est, diagnostics = TRUE)
 
 coeftest(ivreg_est, vcov = vcovHC, type = "HC1")
 ```
+
+**Reading the diagnostic tests:**
+
+| Diagnostic | $H_0$ | Reject $H_0$ means |
+|------------|--------|---------------------|
+| Weak instruments (F-test) | Instruments are weak ($F < 10$) | Instruments are relevant |
+| Wu-Hausman | `lgdp_cap` is exogenous | Endogeneity confirmed → prefer IV |
+| Sargan | Both instruments are exogenous | At least one instrument is invalid |
 
 ---
 
@@ -730,14 +772,14 @@ summary(panel.re)
 
 The Hausman test chooses between FE and RE by testing whether the individual effects are correlated with the regressors.
 
-- **H₀:** No correlation → RE is consistent and more efficient
-- **H₁:** Correlation exists → Only FE is consistent
+- $H_0$: No correlation → RE is consistent and more efficient
+- $H_1$: Correlation exists → Only FE is consistent
 
 ```r
 phtest(panel.fe, panel.re)
 ```
 
-Reject H₀ (small p-value) → prefer **Fixed Effects**.
+Reject $H_0$ (small p-value) → prefer **Fixed Effects**.
 
 ### 8.5 Regression Output with `stargazer`
 
