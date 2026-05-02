@@ -19,16 +19,17 @@ The primary empirical application uses original cross-sectional data on **95 Fre
 ## Table of Contents
 
 - [Prerequisites and Setup](#prerequisites-and-setup)
-- [Chapter 1 — Introduction to R](#chapter-1--introduction-to-r)
-- [Chapter 2 — Importing and Managing Data](#chapter-2--importing-and-managing-data)
-- [Chapter 3 — Exploring the Crimes Dataset](#chapter-3--exploring-the-crimes-dataset)
-- [Chapter 4 — Data Visualization](#chapter-4--data-visualization)
-- [Chapter 5 — Ordinary Least Squares Regression](#chapter-5--ordinary-least-squares-regression)
-- [Chapter 6 — Log-Linear Models](#chapter-6--log-linear-models)
-- [Chapter 7 — Instrumental Variables Estimation](#chapter-7--instrumental-variables-estimation)
-- [Chapter 8 — Panel Data Models](#chapter-8--panel-data-models)
-- [Chapter 9 — Binary Choice Models: Logit and Probit](#chapter-9--binary-choice-models-logit-and-probit)
-- [References](#references)
+- [Chapter 1 — Introduction to R](#chapter-1)
+- [Chapter 2 — Importing and Managing Data](#chapter-2)
+- [Chapter 3 — Exploring the Crimes Dataset](#chapter-3)
+- [Chapter 4 — Data Visualization](#chapter-4)
+- [Chapter 5 — Ordinary Least Squares Regression](#chapter-5)
+- [Chapter 6 — Log-Linear Models](#chapter-6)
+- [Chapter 7 — Instrumental Variables Estimation](#chapter-7)
+- [Chapter 8 — Panel Data Models](#chapter-8)
+- [Chapter 9 — Binary Choice Models: Logit and Probit](#chapter-9)
+- [Bibliography](#bibliography)
+- [Author](#author)
 
 ---
 
@@ -75,6 +76,8 @@ getwd()  # verify
 ```
 
 ---
+
+<a id="chapter-1"></a>
 
 ## Chapter 1 — Introduction to R
 
@@ -170,6 +173,8 @@ nrow(mtcars)
 ```
 
 ---
+
+<a id="chapter-2"></a>
 
 ## Chapter 2 — Importing and Managing Data
 
@@ -270,6 +275,8 @@ str(fpanel)
 ```
 
 ---
+
+<a id="chapter-3"></a>
 
 ## Chapter 3 — Exploring the Crimes Dataset
 
@@ -392,6 +399,8 @@ CrossTable(crimes$crim_degree, crimes$poverty_cat,
 
 ---
 
+<a id="chapter-4"></a>
+
 ## Chapter 4 — Data Visualization
 
 ### 4.1 Base R Scatter Plot
@@ -490,6 +499,8 @@ ggpairs(crim_tab, columns = 1:5, aes(colour = big_region, alpha = 0.5))
 > **Note on `attach()`:** Some older R tutorials use `attach(dataset)` to make column names available as standalone variables. This is **not recommended** in modern R because it can cause unpredictable name conflicts. Use `dataset$column` or `with(dataset, expression)` instead.
 
 ---
+
+<a id="chapter-5"></a>
 
 ## Chapter 5 — Ordinary Least Squares Regression
 
@@ -590,6 +601,8 @@ outlierTest(MyModel)
 
 ---
 
+<a id="chapter-6"></a>
+
 ## Chapter 6 — Log-Linear Models
 
 ### 6.1 Motivation for Log Transformation
@@ -632,6 +645,8 @@ glance(MyModel_log)   # same for the log model
 > **Caution:** R² cannot be compared between a model with `crimes` and one with `lcrimes_cap` as the dependent variable — they measure explained variance on different scales. Use **AIC** or **BIC** for model selection between nested or non-nested models with the same dependent variable.
 
 ---
+
+<a id="chapter-7"></a>
 
 ## Chapter 7 — Instrumental Variables Estimation
 
@@ -835,6 +850,8 @@ coeftest(ivreg_3, vcov = vcovHC, type = "HC1")
 
 ---
 
+<a id="chapter-8"></a>
+
 ## Chapter 8 — Panel Data Models
 
 ### 8.1 Introduction
@@ -901,6 +918,8 @@ stargazer(MyModel, MyModel_log, structuralEq,
 ```
 
 ---
+
+<a id="chapter-9"></a>
 
 ## Chapter 9 — Binary Choice Models: Logit and Probit
 
@@ -1121,6 +1140,8 @@ stargazer(lpm, logit_model, probit_model,
 
 ---
 
+<a id="bibliography"></a>
+
 ## Bibliography
 
 ### R Programming and Data Science
@@ -1160,6 +1181,8 @@ stargazer(lpm, logit_model, probit_model,
 - Zeileis, A., & Hothorn, T. (2002). Diagnostic Checking in Regression Relationships. *R News*, 2(3), 7–10. ([`lmtest`](https://cran.r-project.org/web/packages/lmtest/index.html))
 
 ---
+
+<a id="author"></a>
 
 ## Author
 
