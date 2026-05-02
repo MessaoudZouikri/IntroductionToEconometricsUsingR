@@ -497,7 +497,9 @@ ggpairs(crim_tab, columns = 1:5, aes(colour = big_region, alpha = 0.5))
 
 We estimate the following linear model relating the total number of crimes to four departmental characteristics:
 
-$$\text{crimes}_i = \beta_0 + \beta_1 \cdot \text{gdp\_2011}_i + \beta_2 \cdot \text{poverty\_index}_i + \beta_3 \cdot \text{unemp\_rate}_i + \beta_4 \cdot \text{population}_i + \varepsilon_i$$
+$$\text{crimes}_i = \beta_0 + \beta_1 \cdot \text{gdp}_{2011,i} + \beta_2 \cdot \text{poverty}_{i} + \beta_3 \cdot \text{unemp}_{i} + \beta_4 \cdot \text{population}_i + \varepsilon_i$$
+
+*Notation: $\text{gdp}_{2011}$ = `gdp_2011`, $\text{poverty}$ = `poverty_index`, $\text{unemp}$ = `unemp_rate`.*
 
 ```r
 MyModel <- lm(crimes ~ gdp_2011 + poverty_index + unemp_rate + population,
@@ -608,7 +610,7 @@ crimes$lpop        <- log(crimes$population)
 
 ### 6.3 Estimation
 
-$$\ln\!\left(\frac{\text{crimes}}{pop}\right)_i = \beta_0 + \beta_1 \ln\!\left(\frac{\text{gdp}}{pop}\right)_i + \beta_2 \cdot \text{poverty\_index}_i + \beta_3 \cdot \text{unemp\_rate}_i + \beta_4 \ln(pop)_i + \varepsilon_i$$
+$$\ln\!\left(\frac{\text{crimes}}{\text{pop}}\right)_i = \beta_0 + \beta_1 \ln\!\left(\frac{\text{gdp}}{\text{pop}}\right)_i + \beta_2 \cdot \text{poverty}_{i} + \beta_3 \cdot \text{unemp}_{i} + \beta_4 \ln(\text{pop})_i + \varepsilon_i$$
 
 ```r
 MyModel_log <- lm(lcrimes_cap ~ lgdp_cap + poverty_index + unemp_rate + lpop,
