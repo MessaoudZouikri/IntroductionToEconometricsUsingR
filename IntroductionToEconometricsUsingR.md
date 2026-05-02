@@ -1160,7 +1160,7 @@ stargazer(lpm, logit_model, probit_model,
 - Colonescu, C. (2016). [*Principles of Econometrics with R*](https://bookdown.org/ccolonescu/RPoE4/). Best used alongside: Hill, R. C., Griffiths, W. E., & Lim, G. C. (2011). *Principles of Econometrics*. John Wiley & Sons.
 - Dalpiaz, D. (2020). [*Applied Statistics with R*](https://daviddalpiaz.github.io/appliedstats/). Creative Commons Attribution Non-Commercial Share License.
 - Hanck, Ch., Arnold, M., Gerber, A., & Schmelzer, M. (2020). [*Introduction to Econometrics with R*](https://www.econometrics-with-r.org/).
-- Heiss, F. (2020). [*Using R for Introductory Econometrics*](http://www.urfie.net/read/index.html) (2nd ed.). Independently published. [Download R scripts by chapter](http://www.urfie.net/downloads.html).
+- Heiss, F. (2020). [*Using R for Introductory Econometrics*](https://urfie.net/downloads/PDF/URfIE_web.pdf) (2nd ed.). Independently published. [Download R scripts by chapter](https://urfie.net/code.html).
 - Kleiber, C., & Zeileis, A. (2008). *Applied Econometrics with R*. Springer-Verlag. ([`AER` package](https://cran.r-project.org/web/packages/AER/index.html))
 - Thulin, M. (2021). [*Modern Statistics with R: From Wrangling and Exploring Data to Inference and Predictive Modelling*](http://modernstatisticswithr.com/index.html). Digital version under Creative Commons License.
 - Wehde, W., et al. [*Quantitative Research Methods for Political Science, Public Policy and Public Administration*](https://bookdown.org/wwwehde/qrm_textbook_updates/). See Chapter 11: Introduction to Statistics and Econometrics.
