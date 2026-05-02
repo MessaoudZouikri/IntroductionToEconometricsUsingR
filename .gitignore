@@ -1,0 +1,18 @@
+# ── Unrelated files ────────────────────────────────────────────────────────────
+pdf_chat.ipynb
+
+# ── Old HTML tutorial (replaced by IntroductionToEconometricsUsingR.md) ────────
+rTuto/
+
+# ── R session artifacts (generated automatically when running code) ────────────
+.RData
+.Rhistory
+Rplots.pdf
+*.Rproj.user/
+
+# ── RStudio project files (machine-specific, not needed by students) ───────────
+.Rproj.user/
+*.Rproj
+
+# ── macOS metadata ─────────────────────────────────────────────────────────────
+.DS_Store

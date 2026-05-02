@@ -1,703 +1,540 @@
 
-# Check the number of installed packages.
+# =============================================================================
+# Introduction to Econometrics Using R
+# Master I — Introductory Econometrics Course
+# =============================================================================
+# Before running this script, set the working directory to the project root:
+#   Session > Set Working Directory > To Project Directory   (RStudio menu)
+# All data files are expected in the data/ subfolder.
+# Run rCode/RequiredPackages.r once to install all dependencies.
+# =============================================================================
 
-options(repos="https://cran.rstudio.com")
+
+# =============================================================================
+# CHAPTER 1 — Introduction to R
+# =============================================================================
+
+# Set the CRAN mirror (avoids interactive prompts in batch mode)
+options(repos = "https://cran.rstudio.com")
+
+# Count installed packages
 nrow(installed.packages())
 
-# The number of current packages available at the CRAN website.
-
+# Count packages currently available on CRAN
 nrow(available.packages())
 
-# Installing and loading "tidyverse" package.
+# Install tidyverse (remove the # to run)
+# install.packages("tidyverse")
 
-# install.packages("tidyverse")  # Remove the "#" symbol to enable the installation.
+# Load tidyverse into memory
+library(tidyverse)
 
-# Loading "tidyverse" package into the active memory.
-
-library("tidyverse")
-
-# Getting information on the "tidyverse" package.
-
-library(help="tidyverse")
-
-
-# Check the content of "tidyverse" package.
-
+# Package documentation
+library(help = "tidyverse")
 tidyverse_packages()
 
-# Getting help on the "mean" function.
-
+# Getting help on a function
 help(mean)
+?mean
 
-# Another way to ask for help. 
-? mean
-
-# We can use R as a simple calculator.
-
-2*2
-100/5
+# R as a calculator
+2 * 2
+100 / 5
 2^10
 
-# Store the result in the object "a" using the R's assignement symbol <-
-
+# Assignment operator <-
 a <- 2^10
-
-# Apply the log function to the object "a".
-
+a
 log(a)
 
-# Creating variables.
+# Creating vectors
+countries   <- c("France", "Germany", "Spain", "Italy")
+CovidCases  <- c(1502763, 580415, 1331756, 759829)
+CovidDeaths <- c(38289, 10904, 36495, 39412)
 
-countries <- c("France", "Germany", "Spain", "Italy")
-CovidCases <- c(1502763, 580415, 1331756, 759829)
-CovidDeaths <- c(38289,10904,36495,39412)
+# Combine into a data frame
+covidata <- data.frame(countries, CovidCases, CovidDeaths)
 
-# Creating 'covidata' set as a data frame.
-
-covidata <- data.frame(countries,CovidCases,CovidDeaths)
-
-# Saving a copyt of 'covidata' in the local working directory.
-
-save(covidata,file="covidata.RData")
-
-# Deleting the "covidata" file from the local directory.
-
+# Save and remove (for illustration)
+save(covidata, file = "covidata.RData")
 unlink("covidata.RData")
 
-# Checking the class category of 'covidata'.
-
+# Inspect the data frame
 class(covidata)
-
-# Looking at the structure of 'covidata'.
-
 str(covidata)
-
-
-# Showing the 'covidata' content.
-
 covidata
-
-# Visualising data in a sheet. 
-
-View (covidata)
-
-# Showing the names of all the columns (variables) of "covidata" which are three in this case.
-
+View(covidata)
 names(covidata)
 
-# Loading the "datasets" package (installed with R).
-
-library("datasets")
-
-# Getting information on the "datasets" package.
-
-library(help="datasets")
-
-# Showing the list of available internal datasets.
-
+# Built-in datasets
+library(datasets)
+library(help = "datasets")
 data()
 
-# Loading the "mtcars" data.
-
 data(mtcars)
-
-# First, to have more information on the mtcars data columns (variables), we can ask for help on this dataset.
-
 ?mtcars
-
-# Sructure of mtcars
-
 str(mtcars)
-
-
-# Show the first 10 rows of the data. The default is 6 rows.
-
 head(mtcars, 10)
-
-
-# Show the last rows of data.
-
 tail(mtcars)
-
-# To show how many columns the data contains.
-
 ncol(mtcars)
-
-# To show the number of rows in the dataset.
-
 nrow(mtcars)
 
-# Read the "crimes_SC.csv" dataset where every single data is separated by a Semicolon.
 
-crimes1 <- read.table(file="crimes_SC.csv", sep=";", header=TRUE, dec=".")
+# =============================================================================
+# CHAPTER 2 — Importing and Managing Data
+# =============================================================================
 
+# --- 2.1  Reading CSV files ---------------------------------------------------
 
-# Read the "crimes_C.csv" dataset where data is separated by a Comma.
+# Semicolon-separated
+crimes_sc <- read.table(file = "data/crimes_SC.csv", sep = ";",
+                        header = TRUE, dec = ".")
 
-crimes2 <- read.table(file="crimes_C.csv", sep=",", header=TRUE, dec=".")
+# Comma-separated
+crimes_c  <- read.table(file = "data/crimes_C.csv", sep = ",",
+                        header = TRUE, dec = ".")
 
+# Tab-separated
+crimes_t  <- read.table(file = "data/crimes_T.csv", sep = "\t",
+                        header = TRUE, dec = ".", quote = "\"")
 
-# Read the "crimes_SC.csv" dataset where data is separated by a Tabulation.
+# --- 2.2  Reading Excel files -------------------------------------------------
 
-crimes3 <- read.table(file="crimes_T.csv", sep="\t", header=TRUE, dec=".", quote = "\"")
+library(readxl)
+help(package = "readxl")
 
-#Load the "readxl" package.
+crimes_xls <- read_xls("data/crimes.xls", sheet = "data")
 
-library("readxl")
+# --- 2.3  Creating data by hand (tibble) -------------------------------------
 
-#Getting help
-help(package="readxl")
+# data1: 10 animals, their young, and whether they are wild or domestic
+data1 <- tibble(
+  Animals = c("Cat", "Chicken", "Dog", "Elephant", "Giraffe",
+              "Gnu", "Lion", "Panda", "Penguin", "Rabbit"),
+  Baby    = c("Kitten", "Chick", "Puppy", "Calf", "Calf",
+              "Calf", "Cub", "Cub", "Chick", "Kitten"),
+  Nature  = c("Domestic", "Domestic", "Domestic", "Wild", "Wild",
+              "Domestic", "Wild", "Wild", "Wild", "Domestic")
+)
 
-# Read into R the "crimes.xls" data file.
+# data2: same animals + Turkey and Duck, with birth weight (kg)
+data2 <- tibble(
+  Animals = c("Cat", "Chicken", "Dog", "Elephant", "Giraffe", "Gnu",
+              "Lion", "Panda", "Penguin", "Rabbit", "Turkey", "Duck"),
+  Baby    = c("Kitten", "Chick", "Puppy", "Calf", "Calf", "Calf",
+              "Cub", "Cub", "Chick", "Kitten", "Poult", "Duckling"),
+  Weight  = c(0.08, 0.09, 0.45, 90, 99, 36, 8, 0.1, 0.32, 0.03, 0.05, 0.05)
+)
 
-crimes_xls <- read_xls("crimes.xls", sheet=("data"))
+# --- 2.4  Joining (merging) datasets -----------------------------------------
 
+data_left  <- left_join(data1, data2)   # all data1 rows; Weight added where matched
+data_right <- right_join(data1, data2)  # all data2 rows; Nature added where matched
+data_inner <- inner_join(data1, data2)  # only rows present in both
+data_full  <- full_join(data1, data2)   # all rows from both
+data_semi  <- semi_join(data1, data2)   # data1 rows that have a match (no new columns)
+data_anti  <- anti_join(data1, data2)   # data1 rows with no match in data2
 
-# Creating data by insertion: creating the first dataset "data1" as a tibble format.
+# --- 2.5  Binding (pooling) datasets -----------------------------------------
 
-# This first data file (data1) contains three variables: Animals, their babies, and their nature as wild or domestic.
-
-data1 <-tibble(Animals=c("Cat","Chicken","Dog","Elephant","Giraffe","Gnu","Lion",
-                         "Panda","Penguin","Rabbit"),
-Baby=c("Kitten","Chick","Puppy","Calf","Calf","Calf","Cub","Cub","Chick","Kitten"),
-Nature=c("Domestic","Domestic","Domestic","Wild","Wild","Domestic","Wild","Wild",
-         "Wild","Domestic"))
-
-
-# Creating the second data file "data2" as a tibble format.
-
-# The second data file (data2) contains also three variables: Animals, their babies, and a new variable, on the 'weight of babies' at birth measured in a kilogram. We notice that the variable 'Animals' includes now two new animals: 'Turkey' and 'Duck'. Likewise, for their babies and weight at birth. 
-
-data2<- tibble(Animals=c("Cat","Chicken","Dog","Elephant","Giraffe","Gnu",
-                         "Lion","Panda","Penguin","Rabbit","Turkey","Duck"),
-Baby=c("Kitten","Chick","Puppy","Calf","Calf","Calf","Cub","Cub","Chick",
-       "Kitten","Poult","Duckling"), 
-Weight=c(0.08,0.9,0.45,90,99,36,8,0.1,0.32,0.03,0.05,0.05))
-
-
-# Joining (merging) data files.
-
-data_left<- left_join(data1, data2)
-
-data_right<- right_join(data1, data2)
-
-data_inner <- inner_join(data1, data2)
-
-data_full <- full_join(data1, data2)
-
-data_semi <- semi_join(data1,data2)
-
-data_anti <- anti_join(data1,data2)
-
-# The following code read three Excel files (f2010.xls, f2012.xls and f2014.xls) and assign them to three data frames: f2010, f2012 and f2014.
-
-library("readxl")
-f2010 <- read_xls("f2010.xls")
-f2012 <- read_xls("f2012.xls")
-f2014 <- read_xls("f2014.xls")
-
-# Exploring The f2010 data dimension (how many rows and columns contains this data).
+f2010 <- read_xls("data/f2010.xls")
+f2012 <- read_xls("data/f2012.xls")
+f2014 <- read_xls("data/f2014.xls")
 
 dim(f2010)
-
-# Showing the first ten rows and all columns. 
-
-slice(f2010,1:10)
-
-
-# Examining the content of f2010 data (see the columns name).
-
+slice(f2010, 1:10)
 str(f2010)
 
-
-
-# pooling together the three files containing the same variables observed for three different years, f2010, f2010, f2014 using 'blind_rows()' function.
-
-library("dplyr")
-fpanel <- bind_rows(f2010,f2012,f2014)
-
-# Exploring the dimension of the entire data after pooling the three files.
+library(dplyr)
+fpanel <- bind_rows(f2010, f2012, f2014)
 
 dim(fpanel)
-
-# Showing the first ten rows using the "head()" function instead.
-
-head(fpanel,10)
-
-# Exploring the content of the data which equals now: 10 same columns (or variables) and 321 rows (or observations). 
-
+head(fpanel, 10)
 str(fpanel)
 
 
-# Loading in memory the "readxl" library.
+# =============================================================================
+# CHAPTER 3 — Exploring the Crimes Dataset
+# =============================================================================
 
-library("readxl")
+crimes <- read_xls("data/crimes.xls", sheet = "data", col_names = TRUE)
 
-
-# Reading "crimes.xls" file using "read_xls" function.
-
-crimes <- read_xls("crimes.xls", sheet="data", col_names=TRUE)
-
-
-# The dimension of the crimes data (rows x columns).
-
-dim (crimes)
-
-
-
-# Showing the first ten rows of the data using "slice" function from "dpyr" package. The "head(crimes, 10)" function from the R Base package could be also used.  
-
-slice(crimes,1:10)
-
-# Getting the columns names of "crimes" data using the "names()" function. 
-
-names(crimes) 
-
-
-# Data structure of "crimes" object.
-
+dim(crimes)
+slice(crimes, 1:10)
+names(crimes)
 str(crimes)
 
-# Computing the Minimum of poverty_index.
+# --- Descriptive statistics for a single variable ----------------------------
 
-min(crimes$poverty_index, na.rm=TRUE)
+min(crimes$poverty_index,    na.rm = TRUE)
+max(crimes$poverty_index,    na.rm = TRUE)
+mean(crimes$poverty_index,   na.rm = TRUE)
+sd(crimes$poverty_index,     na.rm = TRUE)
+median(crimes$poverty_index, na.rm = TRUE)
+quantile(crimes$poverty_index, na.rm = TRUE)
 
-# Computing the Maximum of poverty_index.
+# --- Summary statistics for quantitative variables ---------------------------
 
-max(crimes$poverty_index, na.rm=TRUE)
-
-# Computing the Mean of poverty_index.
-
-mean(crimes$poverty_index, na.rm=TRUE)
-
-# Computing the Sdandard Deviation of poverty_index.
-
-sd(crimes$poverty_index, na.rm=TRUE)
-
-# Computing the Median of poverty_index.
-
-median(crimes$poverty_index, na.rm=TRUE)
-
-# Computing the quantile of poverty_index (Min, Q1, Q2, Q3, Max).
-
-quantile(crimes$poverty_index)
-
-# Creating a data for quantitative variables from "crimes" using "subset()" and "select()" functions.
-
-crimes_quant <- subset(crimes, select= c(crimes, gdp_2011, poverty_index, population, unemp_rate))
-
-# Summary statistics 
-
+crimes_quant <- subset(crimes,
+                       select = c(crimes, gdp_2011, poverty_index,
+                                  population, unemp_rate))
 summary(crimes_quant)
 
-# Installing and loading the "tufte" package.
+# --- Frequency table for the categorical variable big_region -----------------
 
-install.packages("tufte")
-library(tufte)
-
-# A simple plot of poverty index
-
-plot(crimes$poverty_index, main="Poverty Index by department", xlab="Department Index", 
-     ylab="Poverty index value", type="p", pch=20, cex=1, col="blue")
-
-# Plot of poverty index using "department name" as labels on the observations points.
-
-plot(crimes$poverty_index, main="Poverty index by department", xlab="Department index", 
-     ylab="Poverty index value", type="p") +
-text(crimes$poverty_index, labels=crimes$dep_name, cex=0.7, pos=1)
-
-# Plotting of poverty index distribution using the Histogram plot   
-
-hist(crimes$poverty_index, main="Poverty distribution using Histogram", 
-     xlab="Poverty index")
-
-# Computing the density (Kernel Density Estimation) 
-
-dens <- density(crimes$poverty_index, bw="nrd0", kernel="epanechnikov", na.rm = TRUE)
-
-# Plotting of poverty distribution using the calculated density
-
-plot(dens, frame = TRUE, col = "steelblue", cex=1.5,
-     main = "Poverty distribution using Density estimation")
-
-# Counting the number of departments in each region. The variable "big_region" is computed by aggregating 22 French regions (following the division of the regions before 2016) in six big regions (1. North-East, 2. North-West, 3. Ile-de-France, 4.Center, 5.South-East, 6. South-West)
-
-# We use the "table()" function for counting.
 table(crimes$big_region)
 
-# install.packages("questionr") # remove the # symbol at the beginning to install the # package
+library(questionr)
+freq(crimes$big_region, cum = TRUE, sort = TRUE, valid = FALSE,
+     total = TRUE, na.last = TRUE)
 
-library("questionr") 
+# --- Identify extreme observations -------------------------------------------
 
-freq(crimes$big_region, cum=TRUE, sort=TRUE, valid=FALSE, total=TRUE, na.last=TRUE)
+subset(crimes, crimes == min(crimes$crimes), select = c(dep_name, crimes))
+subset(crimes, crimes == max(crimes$crimes), select = c(dep_name, crimes))
 
-# Scatter plot between "crimes" and "poverty_index"
+# --- Correlation analysis -----------------------------------------------------
 
-plot(x=crimes$poverty_index, y=crimes$crimes, 
-     main="Relashioship between Crimes and Poverty", xlab="Poverty Index", 
-     ylab="Crimes", type="p", pch=20, cex=1, col="blue")
+cor(crimes$crimes, crimes$poverty_index, method = "pearson")
 
-# Computing the correlation coefficient between "crimes" and "poverty_index' using the Pearson method. 
+cor.test(crimes$crimes, crimes$poverty_index,
+         alternative = "two.sided", method = "pearson", conf.level = 0.95)
 
-cor(crimes$crimes, crimes$poverty_index, method="pearson")
+cor.test(crimes$crimes, crimes$poverty_index,
+         alternative = "two.sided", method = "spearman", conf.level = 0.95)
 
-# Performing the statistical significance test of the correlation between "crimes" and "poverty_index" using "pearson" method.
+# --- Create binary (dummy) variables -----------------------------------------
 
-cor.test(crimes$crimes, crimes$poverty_index, alternative="two.sided",
-         method="pearson", conf.level=0.95)
+crimes$crim_degree <- ifelse(crimes$crimes > mean(crimes$crimes), 1, 0)
+crimes$poverty_cat <- ifelse(crimes$poverty_index > mean(crimes$poverty_index), 1, 0)
 
-# Performing the test for statistical significance of the correlation between "crimes" and "poverty_index" using "spearman" method, which is a non-parametric one. This method is suited when the supposed link between variables is not linear.
+# --- Cross-tabulation and chi-square test ------------------------------------
 
-cor.test(crimes$crimes, crimes$poverty_index, alternative="two.sided", 
-         method="spearman", conf.level=0.95)
+library(gmodels)
 
-# Creating a dummy for "crimes", named 'crim_degree' based on the mean threshold of "crimes".
+CrossTable(crimes$crim_degree, crimes$poverty_cat,
+           digits = 2, prop.chisq = FALSE, chisq = FALSE,
+           fisher = FALSE, mcnemar = FALSE,
+           missing.include = FALSE, format = "SPSS")
 
-crimes$crim_degree <- ifelse(crimes$crimes>mean(crimes$crimes), 1,0 )
-
-# Creating a dummy for "poverty_index", named 'poverty_cat' based on the mean threshold of "poverty_index".
-
-crimes$poverty_cat <- ifelse(crimes$poverty_index>mean(crimes$poverty_index),1,0)
-
-# Performing cross-tabulation between "crim_degree" and "poverty_cat" using "CrossTable()" function.
-
-# Insalling the package "gmodels" to get "CrossTable()" function.
-#install.packages("gmodels")  # Remove # symbol to install.
-
-# Loading the package "gmodels" in memory.
-library("gmodels")
- 
-CrossTable(crimes$crim_degree, crimes$poverty_cat, digits=2, 
-          prop.chisq=FALSE, chisq=FALSE,fisher=FALSE,mcnemar=FALSE, 
-          missing.include = FALSE, format="SPSS")
-
-# Testing the independence between the crimes levels ("cri_degree") and poverty intensity (poverty_cat) expressed as dummy variables using Chi-square test.
-
-CrossTable(crimes$crim_degree,crimes$poverty_cat, digits=2, prop.chisq=FALSE, chisq=TRUE,fisher=FALSE,mcnemar=FALSE, missing.include = FALSE,format="SPSS")
-
-# Scatter plot of "crimes" and "poverty_index" using 'ggplot2'.
-# First, we load 'ggplot2' in memory using 'library()'.
-
-library("ggplot2")
-
-ggplot(crimes, aes(x=poverty_index, y=crimes)) +
-  geom_point() +   # Show dots 
-  labs(subtitle="The link between Crimes and Poverty", 
-       x="Poverty index", 
-       y="Crimes", 
-       title="Scatterplot", 
-     caption = "Source: DCPJ and data processing by ONDRP.") 
+CrossTable(crimes$crim_degree, crimes$poverty_cat,
+           digits = 2, prop.chisq = FALSE, chisq = TRUE,
+           fisher = FALSE, mcnemar = FALSE,
+           missing.include = FALSE, format = "SPSS")
 
 
-# Adding a linear adjustment (regression line) with confidence interval around the line.
+# =============================================================================
+# CHAPTER 4 — Data Visualization
+# =============================================================================
 
-ggplot(crimes, aes(x=poverty_index, y=crimes)) +
-  geom_point() +   # Show dots 
-  labs(subtitle="The link between Crimes and Poverty", 
-       x="Poverty index", 
-       y="Crimes", 
-       title="Scatterplot", 
-     caption = "Source: DCPJ and data processing by ONDRP.") +
-  geom_smooth(method=lm)
+# --- 4.1  Base R plots -------------------------------------------------------
 
+plot(crimes$poverty_index,
+     main = "Poverty Index by Department",
+     xlab = "Department Index",
+     ylab = "Poverty Index Value",
+     type = "p", pch = 20, cex = 1, col = "blue")
 
-# Adding a linear adjustment (regression line) without the confidence interval draw.
+# Add department labels — note: text() is called separately, not with +
+plot(crimes$poverty_index,
+     main = "Poverty Index by Department",
+     xlab = "Department Index",
+     ylab = "Poverty Index Value",
+     type = "p")
+text(crimes$poverty_index,
+     labels = crimes$dep_name,
+     cex = 0.7, pos = 1)
 
-ggplot(crimes, aes(x=poverty_index, y=crimes)) +
-  geom_point() +   # Show dots 
-  labs(subtitle="The link between Crimes and Poverty", 
-       x="Poverty index", 
-       y="Crimes", 
-       title="Scatterplot", 
-     caption = "Source: DCPJ and data processing by ONDRP.") +
-  geom_smooth(method=lm, se=FALSE)
+# --- 4.2  Histogram and kernel density ---------------------------------------
 
-# Adding a non-linear adjustment using  the LOcally Estimated Scatter plot Smoothing (loess) and showing confidence interval draw.
+hist(crimes$poverty_index,
+     main = "Distribution of the Poverty Index",
+     xlab = "Poverty Index")
 
-ggplot(crimes, aes(x=poverty_index, y=crimes)) +
-  geom_point() +   # Show dots 
-  labs(subtitle="The link between Crimes and Poverty", 
-       x="Poverty index", 
-       y="Crimes", 
-       title="Scatterplot", 
-     caption = "Source: DCPJ and data processing by ONDRP.") +
-  geom_smooth(method=loess, se=TRUE)
+dens <- density(crimes$poverty_index, bw = "nrd0",
+                kernel = "epanechnikov", na.rm = TRUE)
+plot(dens, frame = TRUE, col = "steelblue",
+     main = "Kernel Density — Poverty Index")
 
-# Creating a temporary data "crim_tab" containing the main variables, using the functions "subset()" and "select()".
+# --- 4.3  Scatter plots with ggplot2 -----------------------------------------
 
-crim_tab <- subset(crimes, select=c(crimes, gdp_2011,poverty_index,unemp_rate,
-                  population, big_region) )
+library(ggplot2)
 
-# Checking the columns names in "crim_tab".
-names(crim_tab)
+ggplot(crimes, aes(x = poverty_index, y = crimes)) +
+  geom_point() +
+  labs(title    = "Scatterplot",
+       subtitle = "Relationship between Crimes and Poverty",
+       x        = "Poverty Index",
+       y        = "Number of Crimes",
+       caption  = "Source: DCPJ, processed by ONDRP.")
 
-# Showing the variables type using "str()" command.
-str(crim_tab)
+ggplot(crimes, aes(x = poverty_index, y = crimes)) +
+  geom_point() +
+  geom_smooth(method = lm, se = TRUE) +
+  labs(title    = "Scatterplot with OLS Fit",
+       subtitle = "Relationship between Crimes and Poverty",
+       x        = "Poverty Index",
+       y        = "Number of Crimes",
+       caption  = "Source: DCPJ, processed by ONDRP.")
 
-# Taking the database "crim_tab" as the main dataset reference. 
-attach(crim_tab)
+ggplot(crimes, aes(x = poverty_index, y = crimes)) +
+  geom_point() +
+  geom_smooth(method = loess, se = TRUE) +
+  labs(title    = "Scatterplot with LOESS Fit",
+       subtitle = "Relationship between Crimes and Poverty",
+       x        = "Poverty Index",
+       y        = "Number of Crimes",
+       caption  = "Source: DCPJ, processed by ONDRP.")
 
-# Performing descriptive statistics for all variables in one step.
+# --- 4.4  Correlation matrix and scatter-plot matrix -------------------------
 
-summary(crim_tab, digits=2)
+# Working dataset — quantitative variables only
+crim_tab <- subset(crimes,
+                   select = c(crimes, gdp_2011, poverty_index,
+                              unemp_rate, population, big_region))
 
-# Showing which department has the minimum crime number in the sample.
-# It should be noted that the database used here is "crimes" which contains all variables.
- 
-subset(crimes, crimes==min(crimes), select=c(dep_name, crimes))
+summary(crim_tab, digits = 2)
 
-# Showing which department has the maximum crime number in the sample.
+# Numeric subset for correlation and base plot (big_region is non-numeric)
+crim_num <- select(crim_tab, where(is.numeric))
 
-subset(crimes, crimes==max(crimes), select=c(dep_name, crimes))
+plot(crim_num)
 
-# Scatter plots of the variables of interest. 
+round(cor(crim_num, method = "pearson"), 2)
 
-corr_plot <- plot(crim_tab)
-
-
-# Correlation coefficients matrix.
-
-cor(crim_tab, method="pearson")
-
-# Correlation coefficients matrix, while limiting the decimals' number to 2 digits using the _round()_ function.
-
-round(cor(crim_tab, method="pearson"), 2)
-
-
-# Installing "GGally{}" package.
-
-# install.packages("GGally")  # Remove the # symbol to start installing.
-
-# Load in memory the "GGally{}" package
-
-library("GGally")
-
-# Performing scatter plots and correlation coefficients matrix in one step using "ggpairs()" function.
-
-ggpairs(crim_tab, columns =1:5) 
-
-# Estimating regression coefficients using "lm()" function.
-
-MyModel <- lm(crimes ~ gdp_2011 + poverty_index + unemp_rate + population, data=crimes)
+library(GGally)
+ggpairs(crim_tab, columns = 1:5, aes(colour = big_region, alpha = 0.5))
 
 
-# Checking the cotent of "MyModel" object.
+# =============================================================================
+# CHAPTER 5 — Ordinary Least Squares Regression
+# =============================================================================
+
+MyModel <- lm(crimes ~ gdp_2011 + poverty_index + unemp_rate + population,
+              data = crimes)
 
 names(MyModel)
 
-# Summarising the regression results.
-# The option "(scipen=999)" is added to avoid the output of numbers with scientific notation.
-
-options(scipen=999)
+options(scipen = 999)
 summary(MyModel)
 
-# Getting the 95% confidence intervals of the estimated coefficients.
-
-confint(MyModel, level=0.95)
-
-# Computing the predicted values of y (crimes).
+confint(MyModel, level = 0.95)
 
 crimes_hat <- fitted(MyModel)
+head(MyModel$residuals)
 
-# Viewing the residuals (estimation of model errors).
+# --- Multicollinearity (VIF) --------------------------------------------------
 
-View(MyModel$residuals)
-
-# Installing the "car" package made by Fox and S. Weisberg as a companion for applied regression and diagnostics.
-# https://cran.r-project.org/web/packages/car/index.html
-
-# install.packages("car")    # Remove the # symbol to start installing.
-
-# Loading "car" package.
-
-library("car")
-
-# Compute the Variance Inflation Factor (VIF)
+library(car)
 
 vif(MyModel)
+sqrt(vif(MyModel)) > 2   # rule of thumb: VIF > 4 warrants investigation
 
-# Logic test of the presence of Variance Inflation problem. We may have multi-collinearity problem if the VIF statistic is superior to 2.  
-
-sqrt(vif(MyModel)) > 2
-
-# Test for Autocorrelated errors 
+# --- Autocorrelation (Durbin-Watson) -----------------------------------------
 
 durbinWatsonTest(MyModel)
 
-# Computing non-constant error variance test.
-
-# Null hypothesis H0:  Constant error variance.
-# Alternative hypothesis H1: The error variance changes with the level of the response (fitted values), or with a linear combination of predictors.
+# --- Heteroskedasticity (non-constant variance test) -------------------------
+# H0: constant error variance   H1: variance changes with fitted values
 
 ncvTest(MyModel)
 
+# --- Residual diagnostic plots -----------------------------------------------
 
-# Plotting residuals versus fitted values
 spreadLevelPlot(MyModel)
-
-
-# Assessing outliers. Compute the Bonferonni p-value for most extreme observations.
+qqPlot(MyModel, main = "QQ Plot — Studentised Residuals")
+leveragePlots(MyModel)
 outlierTest(MyModel)
 
-# Assessing outliers. Draw the qq plot for studentised residuals.
 
-qqPlot(MyModel, main="QQ Plot")
+# =============================================================================
+# CHAPTER 6 — Log-Linear Models
+# =============================================================================
 
-# Assessing the outliers and influential observations.
+# Create per-capita log-transformed variables
+crimes$lcrimes_cap <- log(crimes$crimes / crimes$population)
+crimes$lgdp_cap    <- log(crimes$gdp_2011 * 1e6 / crimes$population)
+crimes$lpop        <- log(crimes$population)
 
-leveragePlots(MyModel)
-
-# Compute new log scale variables
-
-crimes$lcrimes_cap <- log(crimes$crimes/crimes$population)
-crimes$lgdp_cap <- log(crimes$gdp_2011*1000000/crimes$population)
-crimes$lpop <- log(crimes$population)
-
-# Estimating regression coefficients using "lm()" function.
-
-MyModel_log <- lm(lcrimes_cap ~ lgdp_cap + poverty_index + unemp_rate + lpop, data=crimes)
-
-# Showing results of the new estimation
-
+# Log-log model
+MyModel_log <- lm(lcrimes_cap ~ lgdp_cap + poverty_index + unemp_rate + lpop,
+                  data = crimes)
 summary(MyModel_log)
 
-# Install "broom" package
-# "broom" package is a component of the "tidyverse". If "tidyverse" is 
-# already installed, we don't need to install again "broom". We only load it.
-# Otherwise we must install it.
-
-# Load "broom" package
+# Model comparison (use AIC/BIC — R² cannot be compared across different dep. vars.)
 library(broom)
-
-# Using 'glance' function to compare OLS estimates
-
-# Statistics for the model with the original non-transformed variables
 glance(MyModel)
-
-# Statistics for the model with logarithmic scale variables
 glance(MyModel_log)
 
-# Install the "AER" package: Kleiber, Ch., Zeileis, A. (2008). Applied Econometrics with R, Springer-Verlag
 
-# install.packages("AER")
-
-# Load "AER" , "lm" packages
+# =============================================================================
+# CHAPTER 7 — Instrumental Variables Estimation
+# =============================================================================
 
 library(AER)
 
-# 1. Perform the first stage regression: reduced form equation
-reducedForm <- lm(lgdp_cap ~ pupils + unemp_rate + poverty_index + lpop, data = crimes)
+# --- Stage 1: reduced-form equation ------------------------------------------
 
-# Inspecting the regression results
-
+reducedForm <- lm(lgdp_cap ~ pupils + unemp_rate + poverty_index + lpop,
+                  data = crimes)
 summary(reducedForm)
 
-# Statistical significance test of pupils variable
-# H0 assumption: the beta(pupils) coefficient is equals to zero
-
 coeftest(reducedForm, vcov = vcovHC, type = "HC1")
-
-# inspect the R^2 of the first stage regression
-
 summary(reducedForm)$r.squared
 
-# store the predicted values to be used in the second stage regression as 
-# independent variable, istead of the original variable 'pupils' 
+lgdp_pred <- fitted(reducedForm)
 
+# --- Stage 2: structural equation --------------------------------------------
 
-lgdp_pred <- reducedForm$fitted.values
-
-# A second way to predict the fitted values 
-lgdp_pred2 <- predict(reducedForm)
-
-# Run the second stage regression: structural equation
-structuralEq <- lm(lcrimes_cap ~ lgdp_pred +  unemp_rate + poverty_index + lpop, data = crimes)
-
-# Test of statistical significance of pupils variable
-coeftest(structuralEq, vcov = vcovHC)
-
-
-# Show the results of the structural equation
+structuralEq <- lm(lcrimes_cap ~ lgdp_pred + unemp_rate + poverty_index + lpop,
+                   data = crimes)
 summary(structuralEq)
+coeftest(structuralEq, vcov = vcovHC, type = "HC1")
 
-# Hausman procedure to test endogeneity assumption Regression 
+# --- Hausman endogeneity test (regression-based) -----------------------------
+# Add Stage-1 residuals to the structural equation.
+# A significant coefficient on gdp_residuals confirms endogeneity.
 
-HausmanTest <- lm(lgdp_cap ~ pupils +  unemp_rate + poverty_index + lpop, data = crimes)
-
-# Predict residuals
-gdp_residuals <- predict(HausmanTest)
-
-# Test the significance of residuals term via a regression within the structural equation
+HausmanTest  <- lm(lgdp_cap ~ pupils + unemp_rate + poverty_index + lpop,
+                   data = crimes)
+gdp_residuals <- residuals(HausmanTest)   # residuals, not fitted values
 
 endoTest <- lm(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop +
                  gdp_residuals, data = crimes)
+coeftest(endoTest, vcov = vcovHC, type = "HC1")
 
-# Residuals term significance test
+# --- IV estimation with ivreg() ----------------------------------------------
+# Formula: structural regressors | exogenous variables + external instrument
 
-coeftest(endoTest, vcov = vcovHC)
+ivreg_est <- ivreg(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop |
+                                 pupils   + unemp_rate + poverty_index + lpop,
+                   data = crimes)
 
-
-# IV estimator using 'ivreg' function
-
-ivreg_est <- ivreg(lcrimes_cap ~  lgdp_cap + unemp_rate + poverty_index + lpop | 
-                                             unemp_rate + poverty_index + lpop + pupils, data = crimes)
-
-# Schow the estimates results of using the 'ivreg'  function.
-
-summary(ivreg_est)
-
-# The linear coefficients test hypothesis
-
+summary(ivreg_est, diagnostics = TRUE)
 coeftest(ivreg_est, vcov = vcovHC, type = "HC1")
 
-# Load the "Wooldridge" package
+
+# =============================================================================
+# CHAPTER 8 — Panel Data Models
+# =============================================================================
+
 library(wooldridge)
-
-# Load the 'plm' package on 'Panel data econometrics in R', by Yves Croissant and Giovanni Millo.
-
 library(plm)
 
-# Create the wage dataset
+data(wagepan)
 
-wage <- data(wagepan)
-
-# Fixed effects panel estimate 
-
-panel.fe <- plm(lwage ~ educ + exper + expersq + union + south + married +
-                  black, data=wagepan, index=c("nr", "year"), model="within" )
-
-# Results summary of fe
+# Fixed effects (within estimator — removes time-invariant individual effects)
+panel.fe <- plm(lwage ~ educ + exper + expersq + union + south + married + black,
+                data  = wagepan,
+                index = c("nr", "year"),
+                model = "within")
 summary(panel.fe)
 
-# Random effects panel estimate 
-panel.re <- plm(lwage ~ educ + exper + expersq + union + south + married +
-                  black, data=wagepan, index=c("nr", "year"), model="random" )
-
-# Results summary of re 
+# Random effects
+panel.re <- plm(lwage ~ educ + exper + expersq + union + south + married + black,
+                data  = wagepan,
+                index = c("nr", "year"),
+                model = "random")
 summary(panel.re)
 
-# Hausman specification test, to choose between models (Fe vs. Re)
-# H0: There is no difference between the two models
-
+# Hausman test: H0 = RE consistent and efficient; H1 = FE preferred
 phtest(panel.fe, panel.re)
 
+# Formatted results table
+library(stargazer)
+stargazer(MyModel, MyModel_log, structuralEq,
+          title = "Regression Results",
+          align = TRUE,
+          type  = "text")   # change to type="latex" for LaTeX output
 
-# Install and load the "stargazer" package install.packages("stargazer")
+
+# =============================================================================
+# CHAPTER 9 — Binary Choice Models: Logit and Probit
+# =============================================================================
+
+library(wooldridge)
+
+data(mroz)
+str(mroz)
+head(mroz)
+
+# Share of women in the labor force
+mean(mroz$inlf)
+
+summary(mroz[, c("inlf", "nwifeinc", "educ", "exper", "age", "kidslt6", "kidsge6")])
+
+# --- 9.1  Linear Probability Model (baseline OLS) ----------------------------
+
+lpm <- lm(inlf ~ nwifeinc + educ + exper + expersq + age + kidslt6 + kidsge6,
+          data = mroz)
+summary(lpm)
+
+# Check for out-of-range predictions
+pred_lpm <- fitted(lpm)
+sum(pred_lpm < 0 | pred_lpm > 1)
+
+# --- 9.2  Logit model --------------------------------------------------------
+
+logit_model <- glm(inlf ~ nwifeinc + educ + exper + expersq + age + kidslt6 + kidsge6,
+                   data   = mroz,
+                   family = binomial(link = "logit"))
+summary(logit_model)
+
+# --- 9.3  Probit model -------------------------------------------------------
+
+probit_model <- glm(inlf ~ nwifeinc + educ + exper + expersq + age + kidslt6 + kidsge6,
+                    data   = mroz,
+                    family = binomial(link = "probit"))
+summary(probit_model)
+
+# --- 9.4  Average Partial Effects (marginal effects) -------------------------
+
+library(margins)
+
+ape_logit  <- margins(logit_model)
+summary(ape_logit)
+
+ape_probit <- margins(probit_model)
+summary(ape_probit)
+
+# Manual APE for education (logit) — illustrates the formula
+p_hat      <- fitted(logit_model)
+f_logit    <- p_hat * (1 - p_hat)           # logistic density at each observation
+beta_educ  <- coef(logit_model)["educ"]
+ape_educ   <- mean(f_logit * beta_educ)
+ape_educ
+
+# --- 9.5  Model evaluation ---------------------------------------------------
+
+# McFadden pseudo-R² and other pseudo-R² measures
+library(pscl)
+pR2(logit_model)
+pR2(probit_model)
+
+# AIC and BIC
+AIC(logit_model, probit_model)
+BIC(logit_model, probit_model)
+
+# Confusion matrix (threshold = 0.5)
+class_logit  <- ifelse(fitted(logit_model)  > 0.5, 1, 0)
+class_probit <- ifelse(fitted(probit_model) > 0.5, 1, 0)
+
+table(Predicted = class_logit,  Actual = mroz$inlf)
+table(Predicted = class_probit, Actual = mroz$inlf)
+
+# Percentage correctly classified
+mean(class_logit  == mroz$inlf)
+mean(class_probit == mroz$inlf)
+
+# --- 9.6  Odds ratios (logit only) -------------------------------------------
+
+exp(coef(logit_model))
+exp(confint(logit_model))
+
+# --- 9.7  Comparison table: LPM, Logit, Probit -------------------------------
 
 library(stargazer)
-
-# Format regression results as a LateX table
-
-stargazer(MyModel, MyModel_log, structuralEq, title = "Regression Results", align = TRUE)
-
-
-
-
-
-
-
-
-
-
-
-
+stargazer(lpm, logit_model, probit_model,
+          title          = "Labor Force Participation — Binary Choice Models",
+          dep.var.labels = "In Labor Force (1 = yes)",
+          type           = "text")
