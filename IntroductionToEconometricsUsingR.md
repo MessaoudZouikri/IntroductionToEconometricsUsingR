@@ -653,77 +653,183 @@ The validity of these instruments rests on two standard identification condition
 
 > **Overidentification:** with two instruments and one endogenous variable, the model is **overidentified** (degree of overidentification = 1). This allows the **Sargan–Hansen test** to partially assess instrument validity: conditional on one instrument being valid, it tests whether the other is also exogenous. The test is automatically reported by `summary(ivreg_est, diagnostics = TRUE)`.
 
-### 7.3 Two-Stage Least Squares (2SLS) — Manual Approach
+The three cases below apply the same estimation sequence — Stage 1, Stage 2, Hausman test, and `ivreg()` — to each instrument configuration. Variable suffixes `_1`, `_2`, `_3` track the three cases.
 
-**Stage 1 — Reduced form:** regress the endogenous variable on all exogenous variables **and both instruments**.
+---
+
+### 7.3 Case 1 — Single Instrument: `pupils`
+
+With `pupils` as the only instrument, the model is **exactly identified** (one instrument per endogenous variable). The Sargan test is not available.
+
+#### Stage 1 — Reduced Form
 
 ```r
 library(AER)
 
-reducedForm <- lm(lgdp_cap ~ pupils + roads + unemp_rate + poverty_index + lpop,
-                  data = crimes)
-summary(reducedForm)
-
-# Test the joint significance of both instruments (H0: their coefficients are jointly = 0)
-# A significant F-statistic confirms instrument relevance
-coeftest(reducedForm, vcov = vcovHC, type = "HC1")
-
-summary(reducedForm)$r.squared   # first-stage R²: should be reasonably high
-
-lgdp_pred <- fitted(reducedForm)   # predicted values of lgdp_cap
-```
-
-**Stage 2 — Structural equation:** replace `lgdp_cap` with its Stage 1 prediction.
-
-```r
-structuralEq <- lm(lcrimes_cap ~ lgdp_pred + unemp_rate + poverty_index + lpop,
-                   data = crimes)
-summary(structuralEq)
-coeftest(structuralEq, vcov = vcovHC, type = "HC1")
-```
-
-> **Important:** The standard errors from manual 2SLS are biased (they ignore the uncertainty from Stage 1). Always use `ivreg()` for correct inference.
-
-### 7.4 Hausman Endogeneity Test
-
-The Hausman test compares OLS and IV estimates: if they differ significantly, the OLS assumption of exogeneity is rejected.
-
-The **regression-based version** adds the Stage 1 **residuals** (not fitted values) to the structural equation. A significant coefficient on the residuals confirms endogeneity.
-
-```r
-HausmanTest   <- lm(lgdp_cap ~ pupils + roads + unemp_rate + poverty_index + lpop,
+reducedForm_1 <- lm(lgdp_cap ~ pupils + unemp_rate + poverty_index + lpop,
                     data = crimes)
-gdp_residuals <- residuals(HausmanTest)   # first-stage residuals
+summary(reducedForm_1)
 
-endoTest <- lm(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop +
-                 gdp_residuals, data = crimes)
-coeftest(endoTest, vcov = vcovHC, type = "HC1")
+# Relevance check: pupils must be significantly correlated with lgdp_cap
+coeftest(reducedForm_1, vcov = vcovHC, type = "HC1")
+summary(reducedForm_1)$r.squared   # first-stage R²
+
+lgdp_pred_1 <- fitted(reducedForm_1)
 ```
 
-### 7.5 IV Estimation with `ivreg()`
-
-`ivreg()` implements 2SLS in one step with correct standard errors. The formula syntax `y ~ endogenous + exogenous | instruments + exogenous` separates structural regressors (left of `|`) from instruments (right of `|`). Exogenous regressors appear on **both sides**. Both `pupils` and `roads` appear on the right side only.
+#### Stage 2 — Structural Equation
 
 ```r
-ivreg_est <- ivreg(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop |
-                                 pupils + roads + unemp_rate + poverty_index + lpop,
-                   data = crimes)
-
-# diagnostics = TRUE reports: weak-instrument F-test, Wu-Hausman endogeneity test,
-# and the Sargan overidentification test (valid because we have 2 instruments for 1
-# endogenous variable)
-summary(ivreg_est, diagnostics = TRUE)
-
-coeftest(ivreg_est, vcov = vcovHC, type = "HC1")
+structuralEq_1 <- lm(lcrimes_cap ~ lgdp_pred_1 + unemp_rate + poverty_index + lpop,
+                     data = crimes)
+summary(structuralEq_1)
+coeftest(structuralEq_1, vcov = vcovHC, type = "HC1")
 ```
 
-**Reading the diagnostic tests:**
+> **Important:** Standard errors from manual 2SLS are biased (they ignore Stage 1 uncertainty). Use `ivreg()` for correct inference.
 
-| Diagnostic | $H_0$ | Reject $H_0$ means |
-|------------|--------|---------------------|
+#### Hausman Endogeneity Test
+
+A significant coefficient on the Stage 1 residuals added to the structural equation confirms that `lgdp_cap` is endogenous.
+
+```r
+gdp_res_1 <- residuals(
+  lm(lgdp_cap ~ pupils + unemp_rate + poverty_index + lpop, data = crimes)
+)
+
+endoTest_1 <- lm(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop +
+                   gdp_res_1, data = crimes)
+coeftest(endoTest_1, vcov = vcovHC, type = "HC1")
+```
+
+#### IV Estimation with `ivreg()`
+
+```r
+ivreg_1 <- ivreg(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop |
+                               pupils   + unemp_rate + poverty_index + lpop,
+                 data = crimes)
+
+# diagnostics = TRUE: weak-instrument F-test and Wu-Hausman test
+# (Sargan not available: exactly identified)
+summary(ivreg_1, diagnostics = TRUE)
+
+coeftest(ivreg_1, vcov = vcovHC, type = "HC1")
+```
+
+---
+
+### 7.4 Case 2 — Single Instrument: `roads`
+
+With `roads` as the only instrument, the model is again **exactly identified**.
+
+#### Stage 1 — Reduced Form
+
+```r
+reducedForm_2 <- lm(lgdp_cap ~ roads + unemp_rate + poverty_index + lpop,
+                    data = crimes)
+summary(reducedForm_2)
+
+coeftest(reducedForm_2, vcov = vcovHC, type = "HC1")
+summary(reducedForm_2)$r.squared
+
+lgdp_pred_2 <- fitted(reducedForm_2)
+```
+
+#### Stage 2 — Structural Equation
+
+```r
+structuralEq_2 <- lm(lcrimes_cap ~ lgdp_pred_2 + unemp_rate + poverty_index + lpop,
+                     data = crimes)
+summary(structuralEq_2)
+coeftest(structuralEq_2, vcov = vcovHC, type = "HC1")
+```
+
+#### Hausman Endogeneity Test
+
+```r
+gdp_res_2 <- residuals(
+  lm(lgdp_cap ~ roads + unemp_rate + poverty_index + lpop, data = crimes)
+)
+
+endoTest_2 <- lm(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop +
+                   gdp_res_2, data = crimes)
+coeftest(endoTest_2, vcov = vcovHC, type = "HC1")
+```
+
+#### IV Estimation with `ivreg()`
+
+```r
+ivreg_2 <- ivreg(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop |
+                               roads    + unemp_rate + poverty_index + lpop,
+                 data = crimes)
+
+summary(ivreg_2, diagnostics = TRUE)
+coeftest(ivreg_2, vcov = vcovHC, type = "HC1")
+```
+
+---
+
+### 7.5 Case 3 — Both Instruments: `pupils` and `roads`
+
+Using both instruments simultaneously, the model is **overidentified** (2 instruments, 1 endogenous variable; degree of overidentification = 1). This enables the **Sargan–Hansen overidentification test**.
+
+#### Stage 1 — Reduced Form
+
+```r
+reducedForm_3 <- lm(lgdp_cap ~ pupils + roads + unemp_rate + poverty_index + lpop,
+                    data = crimes)
+summary(reducedForm_3)
+
+# Joint relevance: both instruments should have significant coefficients
+coeftest(reducedForm_3, vcov = vcovHC, type = "HC1")
+summary(reducedForm_3)$r.squared
+
+lgdp_pred_3 <- fitted(reducedForm_3)
+```
+
+#### Stage 2 — Structural Equation
+
+```r
+structuralEq_3 <- lm(lcrimes_cap ~ lgdp_pred_3 + unemp_rate + poverty_index + lpop,
+                     data = crimes)
+summary(structuralEq_3)
+coeftest(structuralEq_3, vcov = vcovHC, type = "HC1")
+```
+
+#### Hausman Endogeneity Test
+
+```r
+gdp_res_3 <- residuals(
+  lm(lgdp_cap ~ pupils + roads + unemp_rate + poverty_index + lpop, data = crimes)
+)
+
+endoTest_3 <- lm(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop +
+                   gdp_res_3, data = crimes)
+coeftest(endoTest_3, vcov = vcovHC, type = "HC1")
+```
+
+#### IV Estimation with `ivreg()` and Sargan Overidentification Test
+
+```r
+ivreg_3 <- ivreg(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop |
+                               pupils + roads + unemp_rate + poverty_index + lpop,
+                 data = crimes)
+
+# diagnostics = TRUE: weak-instrument F, Wu-Hausman endogeneity, Sargan overidentification
+summary(ivreg_3, diagnostics = TRUE)
+
+coeftest(ivreg_3, vcov = vcovHC, type = "HC1")
+```
+
+**Reading the three diagnostic tests:**
+
+| Diagnostic | $H_0$ | Conclusion if $H_0$ rejected |
+|------------|--------|-------------------------------|
 | Weak instruments (F-test) | Instruments are weak ($F < 10$) | Instruments are relevant |
-| Wu-Hausman | `lgdp_cap` is exogenous | Endogeneity confirmed → prefer IV |
-| Sargan | Both instruments are exogenous | At least one instrument is invalid |
+| Wu-Hausman | `lgdp_cap` is exogenous | Endogeneity confirmed → prefer IV over OLS |
+| Sargan | Both instruments are valid (exogenous) | At least one instrument violates the exclusion restriction |
+
+> **Note on the Sargan test:** it can detect mutual inconsistency between the two instruments but cannot identify which one is problematic. Non-rejection does not guarantee exogeneity — it only means the instruments are mutually consistent. Instrument validity ultimately rests on the theoretical arguments in Section 7.2.
 
 ---
 
@@ -1013,14 +1119,62 @@ stargazer(lpm, logit_model, probit_model,
 
 ---
 
-## References
+## Bibliography
 
-- Wooldridge, J. M. (2020). *Introductory Econometrics: A Modern Approach* (7th ed.). Cengage Learning.
-- Kleiber, C., & Zeileis, A. (2008). *Applied Econometrics with R*. Springer-Verlag. (`AER` package)
-- Fox, J., & Weisberg, S. (2019). *An R Companion to Applied Regression* (3rd ed.). Sage Publications. (`car` package)
-- Wickham, H., et al. (2019). Welcome to the tidyverse. *Journal of Open Source Software*, 4(43), 1686.
-- Croissant, Y., & Millo, G. (2008). Panel Data Econometrics in R: The plm Package. *Journal of Statistical Software*, 27(2).
+### R Programming and Data Science
+
+- Arnold, J. B. (2020). [*R for Data Science: Exercise Solutions*](https://jrnold.github.io/r4ds-exercise-solutions/).
+- Grolemund, G. (2020). [*The Tidyverse Cookbook*](https://rstudio-education.github.io/tidyverse-cookbook/).
+- Jones, H. R. [*Introduction to R and RStudio*](https://www.youtube.com/watch?v=lL0s1coNtRk), Video tutorial [part 1](https://www.youtube.com/watch?v=lL0s1coNtRk) and [part 2](https://www.youtube.com/watch?v=ZA28sOmq7nU).
+- Long, J. D., & Teetor, P. (2019). [*R Cookbook*](https://rc2e.com/) (2nd ed.). O'Reilly Media.
+- Paradis, E. (2005). [*R for Beginners*](https://cran.r-project.org/doc/contrib/Paradis-rdebuts_en.pdf). CRAN Tutorial.
+- Peng, R. D. (2020). [*R Programming for Data Science*](https://bookdown.org/rdpeng/rprogdatascience/). Online publication.
+- Wickham, H., & Grolemund, G. (2017). [*R for Data Science*](https://r4ds.had.co.nz/). O'Reilly Media.
+- Barnier, J. [*Introduction à R et au tidyverse*](https://juba.github.io/tidyverse/index.html). See Chapter 10: Manipuler les données avec dplyr.
+
+### Applied Statistics and Econometrics with R
+
+- Colonescu, C. (2016). [*Principles of Econometrics with R*](https://bookdown.org/ccolonescu/RPoE4/). Best used alongside: Hill, R. C., Griffiths, W. E., & Lim, G. C. (2011). *Principles of Econometrics*. John Wiley & Sons.
+- Dalpiaz, D. (2020). [*Applied Statistics with R*](https://daviddalpiaz.github.io/appliedstats/). Creative Commons Attribution Non-Commercial Share License.
+- Hanck, Ch., Arnold, M., Gerber, A., & Schmelzer, M. (2020). [*Introduction to Econometrics with R*](https://www.econometrics-with-r.org/).
+- Heiss, F. (2020). [*Using R for Introductory Econometrics*](http://www.urfie.net/read/index.html) (2nd ed.). Independently published. [Download R scripts by chapter](http://www.urfie.net/downloads.html).
+- Kleiber, C., & Zeileis, A. (2008). *Applied Econometrics with R*. Springer-Verlag. ([`AER` package](https://cran.r-project.org/web/packages/AER/index.html))
+- Thulin, M. (2021). [*Modern Statistics with R: From Wrangling and Exploring Data to Inference and Predictive Modelling*](http://modernstatisticswithr.com/index.html). Digital version under Creative Commons License.
+- Wehde, W., et al. [*Quantitative Research Methods for Political Science, Public Policy and Public Administration*](https://bookdown.org/wwwehde/qrm_textbook_updates/). See Chapter 11: Introduction to Statistics and Econometrics.
+
+### Econometrics and Statistics Textbooks
+
+- Dodge, Y. (2003). *Premiers pas en statistique*. Springer.
+- Fox, J., & Weisberg, S. (2019). *An R Companion to Applied Regression* (3rd ed.). Sage Publications. ([`car` package](https://cran.r-project.org/web/packages/car/index.html))
+- Gujarati, D. N., & Porter, D. C. (2009). *Basic Econometrics* (5th ed.). McGraw-Hill.
 - Mroz, T. A. (1987). The sensitivity of an empirical model of married women's hours of work to economic and statistical assumptions. *Econometrica*, 55(4), 765–799.
+- Wooldridge, J. M. (2019). *Introductory Econometrics: A Modern Approach* (6th ed.). Cengage Learning. ([`wooldridge` package](https://justinmshea.github.io/wooldridge/))
+
+### R Packages
+
+- Croissant, Y., & Millo, G. (2008). Panel Data Econometrics in R: The plm Package. *Journal of Statistical Software*, 27(2). ([`plm`](https://cran.r-project.org/web/packages/plm/index.html))
+- Hlavac, M. (2022). stargazer: Well-Formatted Regression and Summary Statistics Tables. ([`stargazer`](https://CRAN.R-project.org/package=stargazer))
+- Wickham, H., et al. (2019). Welcome to the tidyverse. *Journal of Open Source Software*, 4(43), 1686. ([`tidyverse`](https://www.tidyverse.org/))
+- Zeileis, A., & Hothorn, T. (2002). Diagnostic Checking in Regression Relationships. *R News*, 2(3), 7–10. ([`lmtest`](https://cran.r-project.org/web/packages/lmtest/index.html))
+
+---
+
+## Author
+
+**Messaoud ZOUIKRI**  
+Research Engineer in Economics  
+[CNRS-EconomiX](https://economix.fr/), University of Paris Nanterre
+
+---
+
+For **bug reports, errors, and suggestions**, please write to:
+
+**econometricsUsingR** — [econometricsUsingR@proton.me](mailto:econometricsUsingR@proton.me)
+
+Please include in your message:
+- The chapter and section number where the issue occurs
+- The R version and operating system you are using (`R.version` in the console)
+- A minimal reproducible example if the issue is code-related
 
 ---
 

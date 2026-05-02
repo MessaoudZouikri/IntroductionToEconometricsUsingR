@@ -3,6 +3,13 @@
 # Introduction to Econometrics Using R
 # Master I — Introductory Econometrics Course
 # =============================================================================
+# Author : Messaoud ZOUIKRI
+#          Research Engineer in Economics
+#          CNRS-EconomiX, University of Paris Nanterre
+#
+# Contact: econometricsUsingR@proton.me
+#          Bug reports, errors, and suggestions are welcome.
+# =============================================================================
 # Before running this script, set the working directory to the project root:
 #   Session > Set Working Directory > To Project Directory   (RStudio menu)
 # All data files are expected in the data/ subfolder.
@@ -379,50 +386,126 @@ glance(MyModel_log)
 
 library(AER)
 
-# Two instruments: pupils (human capital channel) and roads (infrastructure channel)
+# Instruments: pupils (human capital channel), roads (infrastructure channel)
+# Three cases: (1) pupils only, (2) roads only, (3) both (overidentified)
 
-# --- Stage 1: reduced-form equation ------------------------------------------
+# =============================================================================
+# Case 1 — Single instrument: pupils
+# =============================================================================
 
-reducedForm <- lm(lgdp_cap ~ pupils + roads + unemp_rate + poverty_index + lpop,
-                  data = crimes)
-summary(reducedForm)
+# --- Stage 1 ------------------------------------------------------------------
 
-# HC-robust t-tests for each instrument (relevance check)
-coeftest(reducedForm, vcov = vcovHC, type = "HC1")
-summary(reducedForm)$r.squared
-
-lgdp_pred <- fitted(reducedForm)
-
-# --- Stage 2: structural equation --------------------------------------------
-
-structuralEq <- lm(lcrimes_cap ~ lgdp_pred + unemp_rate + poverty_index + lpop,
-                   data = crimes)
-summary(structuralEq)
-coeftest(structuralEq, vcov = vcovHC, type = "HC1")
-
-# --- Hausman endogeneity test (regression-based) -----------------------------
-# Add Stage-1 residuals to the structural equation.
-# A significant coefficient on gdp_residuals confirms endogeneity.
-
-HausmanTest   <- lm(lgdp_cap ~ pupils + roads + unemp_rate + poverty_index + lpop,
+reducedForm_1 <- lm(lgdp_cap ~ pupils + unemp_rate + poverty_index + lpop,
                     data = crimes)
-gdp_residuals <- residuals(HausmanTest)   # residuals, not fitted values
+summary(reducedForm_1)
+coeftest(reducedForm_1, vcov = vcovHC, type = "HC1")
+summary(reducedForm_1)$r.squared
 
-endoTest <- lm(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop +
-                 gdp_residuals, data = crimes)
-coeftest(endoTest, vcov = vcovHC, type = "HC1")
+lgdp_pred_1 <- fitted(reducedForm_1)
 
-# --- IV estimation with ivreg() ----------------------------------------------
-# Both instruments (pupils, roads) appear right of |; lgdp_cap is excluded from there.
-# With 2 instruments for 1 endogenous variable, the model is overidentified (df = 1).
+# --- Stage 2 ------------------------------------------------------------------
 
-ivreg_est <- ivreg(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop |
-                                 pupils + roads + unemp_rate + poverty_index + lpop,
-                   data = crimes)
+structuralEq_1 <- lm(lcrimes_cap ~ lgdp_pred_1 + unemp_rate + poverty_index + lpop,
+                     data = crimes)
+summary(structuralEq_1)
+coeftest(structuralEq_1, vcov = vcovHC, type = "HC1")
 
-# diagnostics = TRUE: weak-instrument F-test, Wu-Hausman test, Sargan test
-summary(ivreg_est, diagnostics = TRUE)
-coeftest(ivreg_est, vcov = vcovHC, type = "HC1")
+# --- Hausman endogeneity test -------------------------------------------------
+
+gdp_res_1 <- residuals(
+  lm(lgdp_cap ~ pupils + unemp_rate + poverty_index + lpop, data = crimes)
+)
+endoTest_1 <- lm(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop +
+                   gdp_res_1, data = crimes)
+coeftest(endoTest_1, vcov = vcovHC, type = "HC1")
+
+# --- ivreg() — exactly identified (Sargan not available) ---------------------
+
+ivreg_1 <- ivreg(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop |
+                               pupils   + unemp_rate + poverty_index + lpop,
+                 data = crimes)
+summary(ivreg_1, diagnostics = TRUE)
+coeftest(ivreg_1, vcov = vcovHC, type = "HC1")
+
+
+# =============================================================================
+# Case 2 — Single instrument: roads
+# =============================================================================
+
+# --- Stage 1 ------------------------------------------------------------------
+
+reducedForm_2 <- lm(lgdp_cap ~ roads + unemp_rate + poverty_index + lpop,
+                    data = crimes)
+summary(reducedForm_2)
+coeftest(reducedForm_2, vcov = vcovHC, type = "HC1")
+summary(reducedForm_2)$r.squared
+
+lgdp_pred_2 <- fitted(reducedForm_2)
+
+# --- Stage 2 ------------------------------------------------------------------
+
+structuralEq_2 <- lm(lcrimes_cap ~ lgdp_pred_2 + unemp_rate + poverty_index + lpop,
+                     data = crimes)
+summary(structuralEq_2)
+coeftest(structuralEq_2, vcov = vcovHC, type = "HC1")
+
+# --- Hausman endogeneity test -------------------------------------------------
+
+gdp_res_2 <- residuals(
+  lm(lgdp_cap ~ roads + unemp_rate + poverty_index + lpop, data = crimes)
+)
+endoTest_2 <- lm(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop +
+                   gdp_res_2, data = crimes)
+coeftest(endoTest_2, vcov = vcovHC, type = "HC1")
+
+# --- ivreg() — exactly identified (Sargan not available) ---------------------
+
+ivreg_2 <- ivreg(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop |
+                               roads    + unemp_rate + poverty_index + lpop,
+                 data = crimes)
+summary(ivreg_2, diagnostics = TRUE)
+coeftest(ivreg_2, vcov = vcovHC, type = "HC1")
+
+
+# =============================================================================
+# Case 3 — Both instruments: pupils + roads (overidentified, df = 1)
+# =============================================================================
+
+# --- Stage 1 ------------------------------------------------------------------
+
+reducedForm_3 <- lm(lgdp_cap ~ pupils + roads + unemp_rate + poverty_index + lpop,
+                    data = crimes)
+summary(reducedForm_3)
+coeftest(reducedForm_3, vcov = vcovHC, type = "HC1")
+summary(reducedForm_3)$r.squared
+
+lgdp_pred_3 <- fitted(reducedForm_3)
+
+# --- Stage 2 ------------------------------------------------------------------
+
+structuralEq_3 <- lm(lcrimes_cap ~ lgdp_pred_3 + unemp_rate + poverty_index + lpop,
+                     data = crimes)
+summary(structuralEq_3)
+coeftest(structuralEq_3, vcov = vcovHC, type = "HC1")
+
+# --- Hausman endogeneity test -------------------------------------------------
+
+gdp_res_3 <- residuals(
+  lm(lgdp_cap ~ pupils + roads + unemp_rate + poverty_index + lpop, data = crimes)
+)
+endoTest_3 <- lm(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop +
+                   gdp_res_3, data = crimes)
+coeftest(endoTest_3, vcov = vcovHC, type = "HC1")
+
+# --- ivreg() — overidentified: Sargan test available -------------------------
+# Sargan H0: both instruments are exogenous
+# Rejection => at least one instrument violates the exclusion restriction
+
+ivreg_3 <- ivreg(lcrimes_cap ~ lgdp_cap + unemp_rate + poverty_index + lpop |
+                               pupils + roads + unemp_rate + poverty_index + lpop,
+                 data = crimes)
+summary(ivreg_3, diagnostics = TRUE)
+coeftest(ivreg_3, vcov = vcovHC, type = "HC1")
 
 
 # =============================================================================

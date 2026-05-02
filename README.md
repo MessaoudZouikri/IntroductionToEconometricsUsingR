@@ -80,6 +80,16 @@ The `mroz` dataset used in Chapter 9 (binary choice models) is loaded directly f
 
 ---
 
+## Author
+
+**Messaoud ZOUIKRI**  
+Research Engineer in Economics  
+[CNRS-EconomiX](https://economix.fr/), University of Paris Nanterre
+
+For bug reports, errors, and suggestions: [econometricsUsingR@proton.me](mailto:econometricsUsingR@proton.me)
+
+---
+
 ## License
 
 Distributed under the [GNU General Public License v3](LICENSE).
